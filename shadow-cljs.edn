@@ -1,0 +1,33 @@
+{:deps  true #_{:aliases [:cljs-dev :ui :peer]}
+ :nrepl {:host "0.0.0.0"
+         :port #shadow/env ["SHADOWCLJS_NREPL_PORT" :as :int :default 8899]}
+ :http {:port #shadow/env ["SHADOWCLJS_HTTP_PORT" :as :int :default 9630]
+        :host "0.0.0.0"}
+ :builds {:main {;
+                 :target :node-library
+                ;  :target :node-script
+                 :main peernode.main/main
+                 :exports-var peernode.main/exports
+                 :output-to "resources/out/main.js"
+                 :compiler-options {:optimizations :simple
+                                    :infer-externs   false  #_:auto
+                                        ;;  :dump-core false
+                                    :stable-names true
+                                    :recompile-dependents true
+                                    :source-maps true
+                                    :closure-defines {peernode.main/RSOCKET_PORT #shadow/env ["RSOCKET_PORT" :as :int :default 7000]}
+                                                ;    :language-in  :ecmascript5
+                                                ;    :language-out :no-transpile
+                                    :cross-chunk-method-motion false
+                                        ;;  :verbose true
+                                    }
+                 :js-options
+                 {:js-provider :shadow
+                  :keep-native-requires true
+                  :keep-as-require #{}}
+                 :devtools {:repl-init-ns peernode.main
+                            :repl-pprint true
+                            :autobuild true
+                            :devtools-url #shadow/env ["SHADOWCLJS_DEVTOOLS_URL" :default "http://localhost:9630"]
+                            :after-load peernode.main/reload
+                            :http-port #shadow/env ["SHADOWCLJS_DEVTOOLS_HTTP_PORT" :as :int :default 9500]}}}}

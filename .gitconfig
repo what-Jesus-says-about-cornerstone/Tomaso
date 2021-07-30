@@ -1,0 +1,5 @@
+[user]
+	email = peernode@program
+	name = peernode
+
+# git config --local include.path ../.gitconfig

@@ -1,0 +1,5 @@
+.cpcache/
+package-lock.json
+node_modules/
+.shadow-cljs
+resources/out
