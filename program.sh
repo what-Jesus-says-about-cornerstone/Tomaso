@@ -54,16 +54,4 @@ cljs_compile(){
     #  clj -A:dev -m cljs.main -co cljs-build.edn -v -c # -r
 }
 
-push(){
-  ORIGIN=$(git remote get-url origin)
-  rm -rf .git
-  git init -b main
-  git remote add origin $ORIGIN
-  git config --local include.path ../.gitconfig
-  git add .
-  git commit -m "i am peernode program"
-  git push -f -u origin main
-}
-
-
 "$@"
