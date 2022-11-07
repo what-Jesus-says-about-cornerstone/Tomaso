@@ -1,1 +1,1 @@
-i am peernode program - i run inside forked js-ipfs daemon and expose pubsub over rsocket
+Taha left us a present - well, let's go and unwrap it then

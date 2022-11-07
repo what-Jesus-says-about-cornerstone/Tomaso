@@ -7,10 +7,16 @@
         org.clojure/test.check {:mvn/version "1.0.0"}
         org.clojure/core.async {:mvn/version "1.1.587"}
 
-        github.cljctools/cljc {:local/root "/ctx/cljctools/cljc"}
-        github.cljctools/csp {:local/root "/ctx/cljctools/csp"}
-        github.cljctools/rsocket-js {:local/root  "/ctx/cljctools/rsocket-js"}}
- :aliases {:dev {:extra-deps {/shadow-cljs {:mvn/version "2.11.7"
+        github.Starbuck/cljc {:git/url "https://github.com/Empire-Strikes-Back/Starbuck"
+                              :sha "dd915c9334c300240d1f7625cd85b8ba94bf6972"
+                              :deps/root "cljc"}
+        github.Starbuck/csp {:git/url "https://github.com/Empire-Strikes-Back/Starbuck"
+                             :sha "dd915c9334c300240d1f7625cd85b8ba94bf6972"
+                             :deps/root "csp"}
+        github.Starbuck/rsocket-js {:git/url "https://github.com/Empire-Strikes-Back/Starbuck"
+                                    :sha "dd915c9334c300240d1f7625cd85b8ba94bf6972"
+                                    :deps/root "rsocket-js"}}
+ :aliases {:dev {:extra-deps {thheller/shadow-cljs {:mvn/version "2.11.7"
                                                     :exclusions [nrepl/nrepl
                                                                  cider/piggieback
                                                                  org.clojure/clojure

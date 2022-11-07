@@ -4,6 +4,12 @@ shadow(){
     ./node_modules/.bin/shadow-cljs "$@"
 }
 
+
+repl(){
+    npm i
+    shadow -A:dev cljs-repl :main
+}
+
 server(){
     shadow -A:dev server
     # yarn server

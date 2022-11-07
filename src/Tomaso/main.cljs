@@ -1,4 +1,4 @@
-(ns peernode.main
+(ns Tomaso.main
   (:require
    [clojure.core.async :as a :refer [chan go go-loop <! >!  take! put! offer! poll! alt! alts! close!
                                      pub sub unsub mult tap untap mix admix unmix pipe
@@ -13,17 +13,17 @@
    [cljs.reader :refer [read-string]]
    [cljs.nodejs :as node]
 
-   [cljctools.csp.op.spec :as op.spec]
-   [cljctools.cljc.core :as cljc.core]
+   [galactica.csp.op.spec :as op.spec]
+   [galactica.cljc.core :as cljc.core]
 
-   [cljctools.rsocket.spec :as rsocket.spec]
-   [cljctools.rsocket.chan :as rsocket.chan]
-   [cljctools.rsocket.impl :as rsocket.impl]
-   [cljctools.rsocket.examples-nodejs]
-   [cljctools.rsocket.examples]
+   [galactica.rsocket.spec :as rsocket.spec]
+   [galactica.rsocket.chan :as rsocket.chan]
+   [galactica.rsocket.impl :as rsocket.impl]
+   [galactica.rsocket.examples-nodejs]
+   [galactica.rsocket.examples]
 
-   [peernode.spec :as peernode.spec]
-   [peernode.chan :as peernode.chan]))
+   [Tomaso.spec :as Tomaso.spec]
+   [Tomaso.chan :as Tomaso.chan]))
 
 (def fs (node/require "fs"))
 (def path (node/require "path"))
@@ -34,9 +34,9 @@
 
 (def channels (merge
                (rsocket.chan/create-channels)
-               (peernode.chan/create-channels)))
+               (Tomaso.chan/create-channels)))
 
-(pipe (::rsocket.chan/requests| channels) (::peernode.chan/ops| channels))
+(pipe (::rsocket.chan/requests| channels) (::Tomaso.chan/ops| channels))
 
 (def ^:dynamic daemon nil)
 
@@ -84,9 +84,9 @@
 
 (defn create-proc-ops
   [channels ctx]
-  (let [{:keys [::peernode.chan/ops|
-                ::peernode.chan/pubsub|
-                ::peernode.chan/pubsub|m]} channels
+  (let [{:keys [::Tomaso.chan/ops|
+                ::Tomaso.chan/pubsub|
+                ::Tomaso.chan/pubsub|m]} channels
         state-pubsubs (atom {})]
     (go
       (loop []
@@ -95,16 +95,16 @@
             ops|
             (condp = (select-keys value [::op.spec/op-key ::op.spec/op-type ::op.spec/op-orient])
 
-              {::op.spec/op-key ::peernode.chan/init}
+              {::op.spec/op-key ::Tomaso.chan/init}
               (let [{:keys []} value
                     id (.-id (<p! (daemon._ipfs.id)))]
                 (println ::init)
 
-                (peernode.chan/op
-                 {::op.spec/op-key ::peernode.chan/pubsub-sub
+                (Tomaso.chan/op
+                 {::op.spec/op-key ::Tomaso.chan/pubsub-sub
                   ::op.spec/op-type ::op.spec/fire-and-forget}
                  channels
-                 {::peernode.spec/topic-id TOPIC-ID})
+                 {::Tomaso.spec/topic-id TOPIC-ID})
                 
                 #_(let [counter (volatile! 0)]
                     (go (loop []
@@ -116,29 +116,29 @@
                                (.encode (str {::some-op (str (subs id (- (count id) 7)) " " @counter)}))))
                           (recur)))))
               
-              {::op.spec/op-key ::peernode.chan/id
+              {::op.spec/op-key ::Tomaso.chan/id
                ::op.spec/op-type ::op.spec/request-response
                ::op.spec/op-orient ::op.spec/request}
               (let [{:keys [::op.spec/out|]} value
                     peerId (<p! (daemon._ipfs.id))
                     id (.-id peerId)]
                 (println ::id id)
-                (peernode.chan/op
-                 {::op.spec/op-key ::peernode.chan/id
+                (Tomaso.chan/op
+                 {::op.spec/op-key ::Tomaso.chan/id
                   ::op.spec/op-type ::op.spec/request-response
                   ::op.spec/op-orient ::op.spec/response}
                  out|
-                 {::peernode.spec/id id}))
+                 {::Tomaso.spec/id id}))
 
-              {::op.spec/op-key ::peernode.chan/pubsub-sub
+              {::op.spec/op-key ::Tomaso.chan/pubsub-sub
                ::op.spec/op-type ::op.spec/fire-and-forget}
-              (let [{:keys [::peernode.spec/topic-id]} value
+              (let [{:keys [::Tomaso.spec/topic-id]} value
                     pubsub| (chan (sliding-buffer 64))
                     pubsub|m (mult pubsub|)
                     id (.-id (<p! (daemon._ipfs.id)))]
                 (when-not (get @state-pubsubs topic-id)
-                  (swap! state-pubsubs assoc topic-id {::peernode.chan/pubsub| pubsub|
-                                                       ::peernode.chan/pubsub|m pubsub|m})
+                  (swap! state-pubsubs assoc topic-id {::Tomaso.chan/pubsub| pubsub|
+                                                       ::Tomaso.chan/pubsub|m pubsub|m})
                   (daemon._ipfs.pubsub.subscribe
                    topic-id
                    (fn [msg]
@@ -150,23 +150,23 @@
                            #_(println (format "topicIDs: %s" msg.topicIDs)))
                        (put! pubsub| msg))))))
 
-              {::op.spec/op-key ::peernode.chan/pubsub-unsub
+              {::op.spec/op-key ::Tomaso.chan/pubsub-unsub
                ::op.spec/op-type ::op.spec/fire-and-forget}
-              (let [{:keys [::peernode.spec/topic-id]} value
-                    {:keys [::peernode.chan/pubsub|
-                            ::peernode.chan/pubsub|m]} (get @state-pubsubs topic-id)]
+              (let [{:keys [::Tomaso.spec/topic-id]} value
+                    {:keys [::Tomaso.chan/pubsub|
+                            ::Tomaso.chan/pubsub|m]} (get @state-pubsubs topic-id)]
                 (when pubsub|
                   (swap! state-pubsubs dissoc topic-id)
                   (close! pubsub|)
                   (clojure.core.async/untap-all pubsub|m)
                   (daemon._ipfs.pubsub.unsubscribe topic-id)))
               
-              {::op.spec/op-key ::peernode.chan/request-pubsub-stream
+              {::op.spec/op-key ::Tomaso.chan/request-pubsub-stream
                ::op.spec/op-type ::op.spec/request-stream
                ::op.spec/op-orient ::op.spec/request}
-              (let [{:keys [::op.spec/out| ::peernode.spec/topic-id]} value
-                    {:keys [::peernode.chan/pubsub|
-                            ::peernode.chan/pubsub|m]} (get @state-pubsubs topic-id)]
+              (let [{:keys [::op.spec/out| ::Tomaso.spec/topic-id]} value
+                    {:keys [::Tomaso.chan/pubsub|
+                            ::Tomaso.chan/pubsub|m]} (get @state-pubsubs topic-id)]
                 #_(println ::request-pubsub-stream)
                 #_(println value)
                 (when pubsub|m
@@ -174,22 +174,22 @@
                     (go (loop []
                           (when-not (or (closed? out|) (closed? pubsub|t))
                             (when-let [msg (<! pubsub|t)]
-                              (peernode.chan/op
-                               {::op.spec/op-key ::peernode.chan/request-pubsub-stream
+                              (Tomaso.chan/op
+                               {::op.spec/op-key ::Tomaso.chan/request-pubsub-stream
                                 ::op.spec/op-type ::op.spec/request-stream
                                 ::op.spec/op-orient ::op.spec/response}
                                out|
                                (merge
-                                {::peernode.spec/from (.-from msg)}
+                                {::Tomaso.spec/from (.-from msg)}
                                 (read-string (.toString (.-data msg)))))
                               (recur))))
                         (do
                           (untap pubsub|m pubsub|t)
                           (close! pubsub|t))))))
 
-              {::op.spec/op-key ::peernode.chan/pubsub-publish
+              {::op.spec/op-key ::Tomaso.chan/pubsub-publish
                ::op.spec/op-type ::op.spec/fire-and-forget}
-              (let [{:keys [::peernode.spec/topic-id]} value]
+              (let [{:keys [::Tomaso.spec/topic-id]} value]
                 #_(println ::pubsub-publish)
                 #_(println value)
                 (daemon._ipfs.pubsub.publish
@@ -211,8 +211,8 @@
   (println ::main)
   (println (js-keys d._ipfs))
   (set! daemon d)
-  (peernode.chan/op
-   {::op.spec/op-key ::peernode.chan/init}
+  (Tomaso.chan/op
+   {::op.spec/op-key ::Tomaso.chan/init}
    channels
    {::daemon d}))
 

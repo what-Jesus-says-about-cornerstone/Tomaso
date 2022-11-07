@@ -1,4 +1,4 @@
-(ns peernode.spec
+(ns Tomaso.spec
   (:require
    [clojure.spec.alpha :as s]))
 

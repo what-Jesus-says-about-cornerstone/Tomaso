@@ -1,5 +1,6 @@
 .cpcache/
 package-lock.json
+yarn.lock
 node_modules/
 .shadow-cljs
 resources/out
